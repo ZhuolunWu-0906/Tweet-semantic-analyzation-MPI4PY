@@ -13,4 +13,4 @@ def grid_search(geo, grids):
         ):
             grid_dict[prop["id"]] = letter_dict[prop["id"][0]] - int(prop["id"][1])*100
 
-    return max([(value, key) for key, value in grid_dict.items()])[0]
+    return max([(value, key) for key, value in grid_dict.items()])[1]
