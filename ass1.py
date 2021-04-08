@@ -31,7 +31,7 @@ for line in wordmark:
 for i in text_dict['rows']:
     geo = grid_search(i['value']['geometry']['coordinates'],grids)
     text = (i['value']['properties']['text']).lower()
-    print(text)
+    # print(text)
     mark = text_to_score(text,wordmark_d)
     # print(str(mark)+'\n')
     scoreboard[geo][0] += 1
