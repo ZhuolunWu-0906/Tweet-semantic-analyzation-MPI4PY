@@ -114,7 +114,9 @@ def master(comm, tweets_file, score_dict, grids):
         for i in range(size - 1):
             comm.send('exit', dest=(i + 1), tag=(i + 1))
 
-    print(scoreboard)
+    print("Cell      #Total Tweets    #Overall Sentiment Score")
+    for key, [a, b] in scoreboard.items():
+        print("%3s" % key + " %13d" % a + " %22d" % b)
 
 
 def slave(comm, tweets_file, score_dict, grids):
