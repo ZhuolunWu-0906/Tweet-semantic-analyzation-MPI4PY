@@ -1,15 +1,21 @@
 from mpi4py import MPI
-import csv, sys, json
+import csv
+import sys
+import json
 
 MASTER_RANK = 0
 
 # Read latitudes and longitudes of grids from melbGrid.json
+
+
 def read_grids(grid_file):
     with open(grid_file) as f:
         grids_data = json.load(f)
     return grids_data["features"]
 
 # Read word mark board
+
+
 def read_markboard(dict_file):
     scores = open(dict_file)
     score_dict = {}
@@ -19,6 +25,8 @@ def read_markboard(dict_file):
     return score_dict
 
 # Find geolocation from coordinates
+
+
 def grid_search(geo, grids):
     grid_dict = {}
     letter_dict = {"A": 0, "B": 10, "C": 20, "D": 30}
@@ -32,46 +40,50 @@ def grid_search(geo, grids):
             and geo[1] <= prop["ymax"]
             and geo[1] >= prop["ymin"]
         ):
-            grid_dict[prop["id"]] = letter_dict[prop["id"][0]] - int(prop["id"][1])*100
+            grid_dict[prop["id"]] = letter_dict[prop["id"][0]] - \
+                int(prop["id"][1])*100
 
     return max([(value, key) for key, value in grid_dict.items()])[1]
 
 # Calculate sentiment score
+
+
 def text_to_score(text, score_dict):
     mark = 0
-    head=text.split()[:-1]
-    foot=text.split()[1:]
+    head = text.split()[:-1]
+    foot = text.split()[1:]
     for i in range(len(head)):
-        head[i]=head[i]+" "+foot[i]
+        head[i] = head[i]+" "+foot[i]
     for i in head:
-       if(i.strip("!,?.\'\"") in score_dict.keys()):
-           mark += int(score_dict[i.strip("!,?.\'\"")])
-           text=text.replace(i,'',1)
+        if(i.strip("!,?.\'\"") in score_dict.keys()):
+            mark += int(score_dict[i.strip("!,?.\'\"")])
+            text = text.replace(i, '', 1)
     for i in text.split():
-       if(i.strip("!,?.\'\"") in score_dict.keys()):
-           mark += int(score_dict[i.strip("!,?.\'\"")])
+        if(i.strip("!,?.\'\"") in score_dict.keys()):
+            mark += int(score_dict[i.strip("!,?.\'\"")])
     return mark
+
 
 def process_tweets(rank, size, tweets_file, score_dict, grids):
 
-    with open(tweets_file) as f:
-        tweets = json.load(f)["rows"]
-    
     # Initialize the scoreboard
     scoreboard = {}
     for grid in grids:
-        scoreboard[grid["properties"]["id"]] = [0,0]
-    
-    count = 0
-    for i in tweets:
-        if count%size == rank:
-            geo = grid_search(i['value']['geometry']['coordinates'],grids)
-            text = (i['value']['properties']['text']).lower()
-            scoreboard[geo][0] += 1
-            scoreboard[geo][1] += text_to_score(text,score_dict)
-        count += 1
-    
+        scoreboard[grid["properties"]["id"]] = [0, 0]
+
+    with open(tweets_file) as f:
+        for i, line in enumerate(f):
+            if i % size == rank:
+                if len(line) > 200:
+                    tweet = json.loads(line[:-2])
+                    geo = grid_search(
+                        tweet['value']['geometry']['coordinates'], grids)
+                    text = (tweet['value']['properties']['text']).lower()
+                    scoreboard[geo][0] += 1
+                    scoreboard[geo][1] += text_to_score(text, score_dict)
+
     return scoreboard
+
 
 def marshall_scores(comm):
     size = comm.Get_size()
@@ -79,8 +91,9 @@ def marshall_scores(comm):
     for i in range(size - 1):
         comm.send('return_data', dest=(i + 1), tag=(i + 1))
     for i in range(size - 1):
-        dicts.append(comm.recv(source = (i + 1), tag = MASTER_RANK))
+        dicts.append(comm.recv(source=(i + 1), tag=MASTER_RANK))
     return dicts
+
 
 def master(comm, tweets_file, score_dict, grids):
 
@@ -96,8 +109,8 @@ def master(comm, tweets_file, score_dict, grids):
                 scoreboard[key][0] += value[0]
                 scoreboard[key][1] += value[1]
         for i in range(size - 1):
-            comm.send('exit', dest = (i + 1), tag = (i + 1))
-    
+            comm.send('exit', dest=(i + 1), tag=(i + 1))
+
     print(scoreboard)
 
 
@@ -109,10 +122,10 @@ def slave(comm, tweets_file, score_dict, grids):
     scoreboard = process_tweets(rank, size, tweets_file, score_dict, grids)
 
     while True:
-        in_comm = comm.recv(source = MASTER_RANK, tag = rank)
+        in_comm = comm.recv(source=MASTER_RANK, tag=rank)
         if isinstance(in_comm, str):
             if in_comm in ("return_data"):
-                comm.send(scoreboard, dest = MASTER_RANK, tag = MASTER_RANK)
+                comm.send(scoreboard, dest=MASTER_RANK, tag=MASTER_RANK)
             elif in_comm in ("exit"):
                 exit(0)
 
@@ -129,8 +142,9 @@ def main(argv):
         master(comm, tweets_file, score_dict, grids)
     else:
         slave(comm, tweets_file, score_dict, grids)
-    
+
     return 0
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
