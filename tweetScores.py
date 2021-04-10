@@ -75,12 +75,15 @@ def process_tweets(rank, size, tweets_file, score_dict, grids):
         for i, line in enumerate(f):
             if i % size == rank:
                 if len(line) > 200:
-                    tweet = json.loads(line[:-2])
-                    geo = grid_search(
-                        tweet['value']['geometry']['coordinates'], grids)
-                    text = (tweet['value']['properties']['text']).lower()
-                    scoreboard[geo][0] += 1
-                    scoreboard[geo][1] += text_to_score(text, score_dict)
+                    try:
+                        tweet = json.loads(line[:-2])
+                        geo = grid_search(
+                            tweet['value']['geometry']['coordinates'], grids)
+                        text = (tweet['value']['properties']['text']).lower()
+                        scoreboard[geo][0] += 1
+                        scoreboard[geo][1] += text_to_score(text, score_dict)
+                    except Exception as e:
+                        pass
 
     return scoreboard
 
