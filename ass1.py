@@ -3,7 +3,7 @@ from geoLookUp import grid_search
 from wordmark import text_to_score
 
 # Read latitudes and longitudes of grids from melbGrid.json
-with open("melbGrid2.json", "r") as f:
+with open("melbGrid.json", "r") as f:
     grids_data = json.load(f)
 grids = grids_data["features"]
 
