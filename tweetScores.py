@@ -83,6 +83,7 @@ def process_tweets(rank, size, tweets_file, score_dict, grids):
                         scoreboard[geo][0] += 1
                         scoreboard[geo][1] += text_to_score(text, score_dict)
                     except Exception as e:
+                        print(e)
                         pass
 
     return scoreboard
