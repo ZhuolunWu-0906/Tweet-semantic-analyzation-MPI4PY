@@ -16,6 +16,6 @@ Cell      #Total Tweets    #Overall Sentiment Score
  D4         16666                 +9568
  D5          4705                 +3762
 
-real	4m4.060s
-user	0m0.016s
-sys	0m0.010s
+real	1m22.244s
+user	0m0.012s
+sys	0m0.019s
